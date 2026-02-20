@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmos Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070e;--surface:#0f0f1a;--surface2:#181826;--surface3:#21213a;
+  --accent:#c8a96e;--accent2:#e8c98e;--red:#e05252;--green:#4ecb71;
+  --text:#f0ede8;--text-muted:#888098;--border:rgba(200,169,110,.15);--border2:rgba(255,255,255,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+input,select,textarea{font-family:'DM Sans',sans-serif;}
+
+/* ===== LOGIN SCREEN ===== */
+#loginScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#loginScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(200,169,110,.08) 0%,transparent 70%);}
+.login-box{position:relative;z-index:1;width:400px;text-align:center;}
+.login-logo{font-family:'DM Serif Display',serif;font-size:2.5rem;color:var(--accent);margin-bottom:.25rem;}
+.login-logo span{color:var(--text);}
+.login-sub{color:var(--text-muted);font-size:.85rem;margin-bottom:2.5rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+.login-field{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;color:var(--text);font-size:1rem;width:100%;outline:none;margin-bottom:1rem;transition:border-color .2s;}
+.login-field:focus{border-color:rgba(200,169,110,.5);}
+.login-btn{width:100%;padding:1rem;background:var(--accent);color:#07070e;font-weight:700;font-size:1rem;border:none;border-radius:8px;cursor:pointer;transition:background .2s,transform .1s;}
+.login-btn:hover{background:var(--accent2);transform:translateY(-1px);}
+.login-error{color:var(--red);font-size:.82rem;margin-top:.75rem;min-height:1.2rem;}
+.login-hint{color:var(--text-muted);font-size:.75rem;margin-top:1.5rem;opacity:.7;}
+
+/* ===== ADMIN LAYOUT ===== */
+#adminApp{display:none;}
+.admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-logo{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border2);margin-bottom:1rem;}
+.sidebar-logo .logo{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent);}
+.sidebar-logo .logo span{color:var(--text);}
+.sidebar-logo p{font-size:.7rem;color:var(--text-muted);margin-top:.2rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.5rem;color:var(--text-muted);font-size:.87rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.nav-item.active{color:var(--accent);background:rgba(200,169,110,.06);border-left-color:var(--accent);}
+.nav-item .icon{width:18px;height:18px;flex-shrink:0;opacity:.7;}
+.nav-item.active .icon{opacity:1;}
+.nav-section-label{padding:.75rem 1.5rem .3rem;font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);opacity:.6;}
+.sidebar-bottom{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border2);}
+.admin-user{display:flex;align-items:center;gap:.75rem;}
+.admin-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#07070e;flex-shrink:0;}
+.admin-name{font-size:.83rem;font-weight:600;}
+.admin-role{font-size:.7rem;color:var(--text-muted);}
+
+/* Main content */
+.admin-main{overflow:auto;}
+.admin-topbar{padding:1.25rem 2rem;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:rgba(15,15,26,.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.page-title{font-family:'DM Serif Display',serif;font-size:1.4rem;}
+.topbar-actions{display:flex;gap:.75rem;}
+.btn{padding:.55rem 1.2rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-primary{background:var(--accent);color:#07070e;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(200,169,110,.4);}
+.btn-red{background:rgba(224,82,82,.15);color:var(--red);border:1px solid rgba(224,82,82,.3);}
+.btn-red:hover{background:rgba(224,82,82,.25);}
+.btn-green{background:rgba(78,203,113,.15);color:var(--green);border:1px solid rgba(78,203,113,.3);}
+.btn-green:hover{background:rgba(78,203,113,.25);}
+.btn-sm{padding:.38rem .85rem;font-size:.76rem;}
+
+/* Panels */
+.admin-panel{display:none;padding:2rem;}
+.admin-panel.active{display:block;}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;overflow:hidden;}
+.card-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;}
+.card-header h3{font-size:.95rem;font-weight:700;}
+.card-body{padding:1.5rem;}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:1.25rem;}
+.stat-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.4rem;}
+.stat-value{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text);line-height:1;}
+.stat-change{font-size:.75rem;margin-top:.4rem;}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{padding:.65rem 1rem;text-align:left;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);border-bottom:1px solid var(--border2);}
+.data-table td{padding:.75rem 1rem;font-size:.85rem;border-bottom:1px solid var(--border2);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,255,255,.02);}
+.thumb-sm{width:56px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.badge{display:inline-block;padding:.18rem .55rem;border-radius:100px;font-size:.68rem;font-weight:700;letter-spacing:.05em;}
+.badge-green{background:rgba(78,203,113,.15);color:var(--green);}
+.badge-yellow{background:rgba(200,169,110,.15);color:var(--accent);}
+.badge-red{background:rgba(224,82,82,.15);color:var(--red);}
+.badge-gray{background:rgba(255,255,255,.08);color:var(--text-muted);}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+.form-group{display:flex;flex-direction:column;gap:.4rem;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:.78rem;font-weight:700;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;}
+.form-input{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:.65rem .9rem;color:var(--text);font-size:.88rem;outline:none;transition:border-color .2s;width:100%;}
+.form-input:focus{border-color:rgba(200,169,110,.5);}
+.form-input::placeholder{color:var(--text-muted);}
+.form-select{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:.65rem .9rem;color:var(--text);font-size:.88rem;outline:none;transition:border-color .2s;width:100%;cursor:pointer;}
+.form-select:focus{border-color:rgba(200,169,110,.5);}
+.form-textarea{resize:vertical;min-height:100px;}
+.form-hint{font-size:.72rem;color:var(--text-muted);margin-top:.25rem;}
+
+/* Upload zone */
+.upload-zone{background:var(--surface2);border:2px dashed var(--border);border-radius:10px;padding:3rem;text-align:center;cursor:pointer;transition:all .25s;position:relative;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:rgba(200,169,110,.6);background:rgba(200,169,110,.05);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2.5rem;margin-bottom:1rem;display:block;}
+.upload-zone h4{font-size:1rem;font-weight:600;margin-bottom:.4rem;}
+.upload-zone p{font-size:.82rem;color:var(--text-muted);}
+.upload-progress{margin-top:1.5rem;display:none;}
+.progress-bar{height:5px;background:var(--surface3);border-radius:5px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:5px;width:0%;transition:width .3s;}
+.file-preview{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1rem;display:none;align-items:center;gap:1rem;margin-top:1rem;}
+.file-preview.show{display:flex;}
+
+/* Toggle */
+.toggle{position:relative;width:42px;height:22px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.tog-slider{position:absolute;inset:0;background:var(--surface3);border-radius:20px;transition:background .2s;}
+.tog-slider::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.toggle input:checked~.tog-slider{background:var(--accent);}
+.toggle input:checked~.tog-slider::after{transform:translateX(20px);}
+
+/* Color picker row */
+.color-row{display:flex;gap:.5rem;flex-wrap:wrap;}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0;}
+.color-swatch:hover{transform:scale(1.15);}
+.color-swatch.selected{border-color:#fff;}
+
+/* Activity */
+.activity-list{display:flex;flex-direction:column;gap:.1rem;}
+.activity-item{display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border2);}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.activity-text{font-size:.83rem;line-height:1.4;}
+.activity-time{font-size:.72rem;color:var(--text-muted);margin-top:.15rem;}
+
+/* ===== DRAG AND DROP EDITOR ===== */
+.editor-wrap{display:grid;grid-template-columns:260px 1fr 240px;gap:0;height:calc(100vh - 65px);overflow:hidden;}
+.editor-sidebar-left{background:var(--surface);border-right:1px solid var(--border2);overflow-y:auto;padding:1rem;}
+.editor-canvas-wrap{background:#1a1a1a;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:2rem;}
+.editor-sidebar-right{background:var(--surface);border-left:1px solid var(--border2);overflow-y:auto;padding:1rem;}
+.editor-section-title{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin:.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border2);}
+
+/* Block palette */
+.block-palette{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.block-item{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:.75rem .6rem;text-align:center;cursor:grab;transition:all .15s;user-select:none;}
+.block-item:hover{border-color:rgba(200,169,110,.4);background:rgba(200,169,110,.06);transform:translateY(-1px);}
+.block-item:active{cursor:grabbing;}
+.block-item-icon{font-size:1.4rem;display:block;margin-bottom:.3rem;}
+.block-item-label{font-size:.7rem;font-weight:600;color:var(--text-muted);}
+
+/* Canvas */
+.editor-canvas{width:900px;min-height:600px;background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;position:relative;}
+.canvas-scale-wrap{transform-origin:top center;}
+
+/* Canvas drop zone */
+.drop-zone{min-height:50px;border:2px dashed transparent;transition:all .2s;position:relative;}
+.drop-zone.drag-over{border-color:rgba(200,169,110,.5);background:rgba(200,169,110,.04);}
+.drop-zone-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:rgba(200,169,110,.5);pointer-events:none;font-weight:600;}
+
+/* Canvas blocks */
+.canvas-block{position:relative;cursor:pointer;transition:outline .15s;}
+.canvas-block:hover{outline:2px solid rgba(200,169,110,.5);}
+.canvas-block.selected{outline:2px solid var(--accent);outline-offset:1px;}
+.block-actions{position:absolute;top:-32px;right:0;display:none;gap:.3rem;z-index:50;}
+.canvas-block.selected .block-actions{display:flex;}
+.block-action-btn{padding:.25rem .5rem;background:var(--accent);color:#07070e;border:none;border-radius:4px;font-size:.7rem;font-weight:700;cursor:pointer;}
+.block-action-btn.del{background:var(--red);color:#fff;}
+
+/* Block templates */
+.cb-hero{background:linear-gradient(135deg,#0f0c29,#302b63);padding:4rem 3rem;text-align:center;color:#fff;}
+.cb-hero h1{font-family:'DM Serif Display',serif;font-size:2.5rem;margin-bottom:1rem;}
+.cb-hero p{opacity:.7;margin-bottom:1.5rem;max-width:500px;margin-left:auto;margin-right:auto;}
+.cb-hero-btn{display:inline-block;padding:.7rem 1.8rem;background:#c8a96e;color:#0a0a0f;border-radius:5px;font-weight:700;font-size:.9rem;}
+
+.cb-text{padding:2rem 3rem;background:#fff;}
+.cb-text h2{font-family:'DM Serif Display',serif;font-size:1.8rem;color:#0a0a0f;margin-bottom:.75rem;}
+.cb-text p{color:#555;line-height:1.7;}
+
+.cb-video-grid{padding:2rem 3rem;background:#0a0a0f;}
+.cb-video-grid h2{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#fff;margin-bottom:1.25rem;}
+.cb-vg-inner{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;}
+.cb-vg-card{background:#13131c;border-radius:6px;overflow:hidden;}
+.cb-vg-card-thumb{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.cb-vg-card-info{padding:.6rem;}
+.cb-vg-card-title{font-size:.75rem;color:#f0ede8;font-weight:500;}
+
+.cb-cta{background:#c8a96e;padding:3rem;text-align:center;}
+.cb-cta h2{font-family:'DM Serif Display',serif;font-size:2rem;color:#0a0a0f;margin-bottom:.75rem;}
+.cb-cta p{color:rgba(10,10,15,.7);margin-bottom:1.5rem;}
+.cb-cta-btn{display:inline-block;padding:.7rem 2rem;background:#0a0a0f;color:#fff;border-radius:5px;font-weight:700;}
+
+.cb-image{width:100%;aspect-ratio:21/7;background:linear-gradient(135deg,#1a1a2e,#2d2d5a);display:flex;align-items:center;justify-content:center;font-size:3rem;color:rgba(255,255,255,.3);}
+
+.cb-footer{background:#07070e;padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:#888;}
+.cb-footer .fl{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#c8a96e;}
+.cb-footer .fl span{color:#fff;}
+
+.cb-testimonial{background:#f8f6f2;padding:2.5rem 3rem;text-align:center;}
+.cb-testimonial blockquote{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#0a0a0f;margin-bottom:1rem;font-style:italic;}
+.cb-testimonial cite{font-size:.82rem;color:#888;}
+
+.cb-channels{background:#0a0a0f;padding:2rem 3rem;}
+.cb-channels h2{font-family:'DM Serif Display',serif;font-size:1.4rem;color:#f0ede8;margin-bottom:1.25rem;}
+.cb-ch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;}
+.cb-ch-card{background:#13131c;border-radius:8px;padding:.9rem;text-align:center;}
+.cb-ch-av{width:40px;height:40px;border-radius:50%;margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.cb-ch-name{font-size:.68rem;font-weight:600;color:#f0ede8;}
+
+/* Props panel */
+.prop-group{margin-bottom:1.25rem;}
+.prop-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.5rem;}
+.prop-input{background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:.45rem .7rem;color:var(--text);font-size:.82rem;width:100%;outline:none;margin-bottom:.4rem;transition:border-color .2s;}
+.prop-input:focus{border-color:rgba(200,169,110,.4);}
+.prop-row{display:flex;gap:.4rem;}
+.no-selection{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text-muted);text-align:center;}
+.no-selection span{font-size:2rem;margin-bottom:.5rem;}
+.no-selection p{font-size:.82rem;}
+
+/* Editor toolbar */
+.editor-toolbar{padding:.7rem 1rem;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
+.tool-btn{padding:.35rem .75rem;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;color:var(--text-muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:.3rem;font-family:'DM Sans',sans-serif;}
+.tool-btn:hover{color:var(--text);border-color:rgba(200,169,110,.4);}
+.tool-btn.active{background:rgba(200,169,110,.12);border-color:rgba(200,169,110,.4);color:var(--accent);}
+.zoom-display{font-size:.78rem;color:var(--text-muted);min-width:40px;text-align:center;}
+.tool-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0;}
+
+/* Toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1.25rem;font-size:.85rem;z-index:99999;transform:translateY(10px);opacity:0;transition:all .3s;pointer-events:none;max-width:300px;}
+.toast.show{transform:none;opacity:1;}
+.toast.success{border-color:rgba(78,203,113,.3);color:var(--green);}
+.toast.error{border-color:rgba(224,82,82,.3);color:var(--red);}
+
+/* Responsive */
+@media(max-width:1200px){.stats-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:900px){.admin-layout{grid-template-columns:1fr;}.sidebar{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Cos<span>mos</span></div>
+    <div class="login-sub">Admin Dashboard</div>
+    <input type="text" class="login-field" id="loginUser" placeholder="Username" value="">
+    <input type="password" class="login-field" id="loginPass" placeholder="Password" value="">
+    <button class="login-btn" onclick="doLogin()">Sign In to Admin</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">Demo: admin / cosmos2026</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN APP ===== -->
+<div id="adminApp">
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo">Cos<span>mos</span></div>
+        <p>Admin Panel</p>
+      </div>
+
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="showPanel('dashboard',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showPanel('analytics',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+        Analytics
+      </div>
+
+      <div class="nav-section-label">Content</div>
+      <div class="nav-item" onclick="showPanel('videos',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 8L8 14V8l4 3z"/></svg>
+        Videos
+      </div>
+      <div class="nav-item" onclick="showPanel('upload',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        Upload
+      </div>
+      <div class="nav-item" onclick="showPanel('channels',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        Channels
+      </div>
+
+      <div class="nav-section-label">Design</div>
+      <div class="nav-item" onclick="showPanel('editor',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        Page Editor
+      </div>
+      <div class="nav-item" onclick="showPanel('siteSettings',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        Site Settings
+      </div>
+
+      <div class="nav-section-label">Users</div>
+      <div class="nav-item" onclick="showPanel('users',this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Subscribers
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="admin-user">
+          <div class="admin-avatar">A</div>
+          <div>
+            <div class="admin-name">Admin</div>
+            <div class="admin-role">Super Admin</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:.75rem;justify-content:center;font-size:.78rem;" onclick="logout()">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="admin-main">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="admin-panel active" id="panel-dashboard">
+        <div class="admin-topbar">
+          <div class="page-title">Dashboard</div>
+          <div class="topbar-actions">
+            <button class="btn btn-ghost">Export Report</button>
+            <button class="btn btn-primary" onclick="showPanel('upload',document.querySelector('.nav-item:nth-child(7)'))">+ Upload Video</button>
+          </div>
+        </div>
+        <div style="padding:2rem;">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Subscribers</div>
+              <div class="stat-value">1.04M</div>
+              <div class="stat-change up">↑ 12.4% this month</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Videos Published</div>
+              <div class="stat-value">2,841</div>
+              <div class="stat-change up">↑ 23 this week</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Watch Hours</div>
+              <div class="stat-value">48.2M</div>
+              <div class="stat-change up">↑ 8.7% this month</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Monthly Revenue</div>
+              <div class="stat-value">$5.2M</div>
+              <div class="stat-change up">↑ 3.1% this month</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 380px;gap:1.5rem;">
+            <div class="card">
+              <div class="card-header"><h3>Recent Videos</h3><button class="btn btn-ghost btn-sm" onclick="showPanel('videos',null)">View All</button></div>
+              <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                  <thead><tr><th>Video</th><th>Status</th><th>Views</th><th>Duration</th><th>Actions</th></tr></thead>
+                  <tbody id="dashVideoTable"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3>Recent Activity</h3></div>
+              <div class="card-body" style="padding:1rem 1.5rem;">
+                <div class="activity-list" id="activityList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS ===== -->
+      <div class="admin-panel" id="panel-analytics">
+        <div class="admin-topbar"><div class="page-title">Analytics</div></div>
+        <div style="padding:2rem;">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Today's Views</div><div class="stat-value">142K</div><div class="stat-change up">↑ 18% vs yesterday</div></div>
+            <div class="stat-card"><div class="stat-label">Avg Watch Time</div><div class="stat-value">28m</div><div class="stat-change up">↑ 2m this week</div></div>
+            <div class="stat-card"><div class="stat-label">New Subscribers</div><div class="stat-value">4,821</div><div class="stat-change down">↓ 2.1% today</div></div>
+            <div class="stat-card"><div class="stat-label">Churn Rate</div><div class="stat-value">2.1%</div><div class="stat-change up">↓ 0.3% (good)</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Views Over Time</h3></div>
+            <div class="card-body" style="height:250px;display:flex;align-items:flex-end;gap:6px;padding:1.5rem;">
+              <div id="chartBars" style="display:flex;align-items:flex-end;gap:6px;width:100%;height:200px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VIDEOS ===== -->
+      <div class="admin-panel" id="panel-videos">
+        <div class="admin-topbar">
+          <div class="page-title">Videos</div>
+          <div class="topbar-actions">
+            <input type="text" class="form-input" placeholder="Search videos…" style="width:220px;" oninput="filterTable(this.value)">
+            <button class="btn btn-primary" onclick="showPanel('upload',null)">+ Upload</button>
+          </div>
+        </div>
+        <div style="padding:2rem;">
+          <div class="card">
+            <div class="card-body" style="padding:0;">
+              <table class="data-table" id="videoTable">
+                <thead><tr><th>Video</th><th>Channel</th><th>Category</th><th>Status</th><th>Views</th><th>Duration</th><th>Actions</th></tr></thead>
+                <tbody id="videoTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== UPLOAD ===== -->
+      <div class="admin-panel" id="panel-upload">
+        <div class="admin-topbar"><div class="page-title">Upload Video</div></div>
+        <div style="padding:2rem;max-width:860px;">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="videoFileInput" accept="video/*" onchange="handleFileSelect(this)">
+            <span class="upload-icon">🎬</span>
+            <h4>Drop your video here</h4>
+            <p>MP4, MOV, AVI, MKV · Max 50GB · Drag &amp; drop or click to browse</p>
+          </div>
+          <div class="file-preview" id="filePreview">
+            <span style="font-size:2rem;">🎥</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:.9rem;" id="fileName">video.mp4</div>
+              <div style="font-size:.78rem;color:var(--text-muted);" id="fileSize">—</div>
+            </div>
+            <button class="btn btn-red btn-sm" onclick="clearFile()">Remove</button>
+          </div>
+          <div class="upload-progress" id="uploadProgress">
+            <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.8rem;color:var(--text-muted);">
+              <span>Uploading…</span>
+              <span id="uploadPct">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="uploadProgressFill"></div></div>
+          </div>
+
+          <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header"><h3>Video Details</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group full"><label class="form-label">Title</label><input type="text" class="form-input" placeholder="Enter video title…"></div>
+                <div class="form-group full"><label class="form-label">Description</label><textarea class="form-input form-textarea" placeholder="Describe this video…"></textarea></div>
+                <div class="form-group"><label class="form-label">Channel</label>
+                  <select class="form-select"><option>Kurzgesagt</option><option>Veritasium</option><option>3Blue1Brown</option><option>CGP Grey</option><option>Wendover</option><option>PBS Space Time</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Category</label>
+                  <select class="form-select"><option>Science</option><option>History</option><option>Technology</option><option>Mathematics</option><option>Culture</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Visibility</label>
+                  <select class="form-select"><option>Public</option><option>Members Only</option><option>Unlisted</option><option>Draft</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Publish Date</label><input type="date" class="form-input"></div>
+                <div class="form-group full"><label class="form-label">Thumbnail</label>
+                  <div class="upload-zone" style="padding:1.5rem;">
+                    <input type="file" accept="image/*">
+                    <span class="upload-icon" style="font-size:1.5rem;">🖼️</span>
+                    <p>Upload thumbnail image (16:9, min 1280×720)</p>
+                  </div>
+                </div>
+                <div class="form-group"><label class="form-label">Captions File (SRT/VTT)</label><input type="file" class="form-input" accept=".srt,.vtt" style="padding:.4rem;"></div>
+                <div class="form-group"><label class="form-label">Tags</label><input type="text" class="form-input" placeholder="science, space, cosmos…"></div>
+              </div>
+              <div style="margin-top:1.5rem;display:flex;gap:.75rem;">
+                <button class="btn btn-primary" onclick="simulateUpload()">🚀 Publish Video</button>
+                <button class="btn btn-ghost">Save as Draft</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CHANNELS ===== -->
+      <div class="admin-panel" id="panel-channels">
+        <div class="admin-topbar"><div class="page-title">Channels</div><button class="btn btn-primary">+ Add Channel</button></div>
+        <div style="padding:2rem;">
+          <div class="card">
+            <div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>Channel</th><th>Videos</th><th>Subscribers</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr><td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:linear-gradient(135deg,#0f0c29,#302b63);">🌌</div>Kurzgesagt</div></td><td>312</td><td>18.4M</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Edit</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:linear-gradient(135deg,#141e30,#243b55);">⚗️</div>Veritasium</div></td><td>198</td><td>14.2M</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Edit</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:linear-gradient(135deg,#093028,#237a57);">📐</div>3Blue1Brown</div></td><td>156</td><td>6.8M</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Edit</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:linear-gradient(135deg,#1d2671,#c33764);">🏛️</div>CGP Grey</div></td><td>89</td><td>5.6M</td><td><span class="badge badge-yellow">Review</span></td><td><button class="btn btn-ghost btn-sm">Edit</button></td></tr>
+                  <tr><td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:linear-gradient(135deg,#373b44,#4286f4);">✈️</div>Wendover</div></td><td>241</td><td>4.1M</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">Edit</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE EDITOR ===== -->
+      <div class="admin-panel" id="panel-editor" style="padding:0;">
+        <div class="admin-topbar" style="position:relative;z-index:10;">
+          <div class="page-title">Page Editor</div>
+          <div class="topbar-actions">
+            <select class="form-select" style="width:150px;" id="pageSelect">
+              <option value="home">Home Page</option>
+              <option value="browse">Browse Page</option>
+              <option value="channel">Channel Page</option>
+              <option value="watch">Watch Page</option>
+            </select>
+            <button class="btn btn-ghost" id="undoBtn" onclick="undoAction()">↩ Undo</button>
+            <button class="btn btn-ghost" onclick="previewCanvas()">👁 Preview</button>
+            <button class="btn btn-primary" onclick="saveCanvas()">💾 Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Editor toolbar -->
+        <div class="editor-toolbar">
+          <button class="tool-btn" onclick="zoom(-0.1)">−</button>
+          <span class="zoom-display" id="zoomDisplay">100%</span>
+          <button class="tool-btn" onclick="zoom(0.1)">+</button>
+          <button class="tool-btn" onclick="zoomFit()">Fit</button>
+          <div class="tool-sep"></div>
+          <button class="tool-btn active" id="toolSelect" onclick="setTool('select',this)">↖ Select</button>
+          <div class="tool-sep"></div>
+          <button class="tool-btn" onclick="moveSelected(-1)">↑</button>
+          <button class="tool-btn" onclick="moveSelected(1)">↓</button>
+          <div class="tool-sep"></div>
+          <button class="tool-btn" onclick="duplicateSelected()">⧉ Duplicate</button>
+          <button class="tool-btn" onclick="deleteSelected()" style="color:var(--red);">✕ Delete</button>
+          <div class="tool-sep"></div>
+          <button class="tool-btn" onclick="clearCanvas()" style="color:var(--text-muted);">Clear All</button>
+        </div>
+
+        <div class="editor-wrap">
+          <!-- Left: Block palette -->
+          <div class="editor-sidebar-left">
+            <div class="editor-section-title">Blocks — Drag to Canvas</div>
+            <div class="block-palette">
+              <div class="block-item" draggable="true" ondragstart="dragBlock('hero',event)"><span class="block-item-icon">🦸</span><div class="block-item-label">Hero</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('text',event)"><span class="block-item-icon">📝</span><div class="block-item-label">Text</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('videogrid',event)"><span class="block-item-icon">🎬</span><div class="block-item-label">Video Grid</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('cta',event)"><span class="block-item-icon">📣</span><div class="block-item-label">CTA</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('image',event)"><span class="block-item-icon">🖼️</span><div class="block-item-label">Image</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('channels',event)"><span class="block-item-icon">📡</span><div class="block-item-label">Channels</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('testimonial',event)"><span class="block-item-icon">💬</span><div class="block-item-label">Quote</div></div>
+              <div class="block-item" draggable="true" ondragstart="dragBlock('footer',event)"><span class="block-item-icon">🔻</span><div class="block-item-label">Footer</div></div>
+            </div>
+
+            <div class="editor-section-title" style="margin-top:1.5rem;">Page Layers</div>
+            <div id="layersList" style="display:flex;flex-direction:column;gap:.3rem;"></div>
+          </div>
+
+          <!-- Center: Canvas -->
+          <div class="editor-canvas-wrap" id="canvasWrap" ondragover="canvasDragOver(event)" ondrop="canvasDrop(event)">
+            <div class="canvas-scale-wrap" id="canvasScaleWrap">
+              <div class="editor-canvas" id="editorCanvas">
+                <div class="drop-zone" id="rootDropZone" ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,0)">
+                  <div class="drop-zone-hint" id="canvasHint">Drag blocks here to build your page</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Properties -->
+          <div class="editor-sidebar-right">
+            <div class="editor-section-title">Properties</div>
+            <div id="propsPanel">
+              <div class="no-selection"><span>👆</span><p>Select a block to edit its properties</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SITE SETTINGS ===== -->
+      <div class="admin-panel" id="panel-siteSettings">
+        <div class="admin-topbar"><div class="page-title">Site Settings</div><button class="btn btn-primary" onclick="saveSettings()">Save Changes</button></div>
+        <div style="padding:2rem;max-width:800px;display:flex;flex-direction:column;gap:1.5rem;">
+
+          <div class="card">
+            <div class="card-header"><h3>General</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Site Name</label><input type="text" class="form-input" value="Cosmos"></div>
+                <div class="form-group"><label class="form-label">Tagline</label><input type="text" class="form-input" value="Stream Smarter"></div>
+                <div class="form-group full"><label class="form-label">Site Description</label><textarea class="form-input form-textarea" style="min-height:70px;">Premium ad-free streaming from the world's most thoughtful creators.</textarea></div>
+                <div class="form-group"><label class="form-label">Support Email</label><input type="email" class="form-input" value="hello@cosmos.stream"></div>
+                <div class="form-group"><label class="form-label">Default Language</label><select class="form-select"><option>English</option><option>Spanish</option><option>French</option><option>German</option></select></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Branding & Theme</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Accent Color</label>
+                  <div class="color-row">
+                    <div class="color-swatch selected" style="background:#c8a96e;" onclick="selectColor(this,'#c8a96e')"></div>
+                    <div class="color-swatch" style="background:#6ea8c8;" onclick="selectColor(this,'#6ea8c8')"></div>
+                    <div class="color-swatch" style="background:#c86e8a;" onclick="selectColor(this,'#c86e8a')"></div>
+                    <div class="color-swatch" style="background:#6ec87a;" onclick="selectColor(this,'#6ec87a')"></div>
+                    <div class="color-swatch" style="background:#a06ec8;" onclick="selectColor(this,'#a06ec8')"></div>
+                    <div class="color-swatch" style="background:#c8c86e;" onclick="selectColor(this,'#c8c86e')"></div>
+                    <input type="color" value="#c8a96e" style="width:28px;height:28px;border:none;border-radius:50%;cursor:pointer;padding:0;background:none;">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Theme</label>
+                  <select class="form-select"><option selected>Dark (Cosmic)</option><option>Light</option><option>Auto</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Logo Upload</label><input type="file" class="form-input" accept="image/*" style="padding:.4rem;"></div>
+                <div class="form-group"><label class="form-label">Favicon</label><input type="file" class="form-input" accept="image/*" style="padding:.4rem;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Subscription & Pricing</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Monthly Price ($)</label><input type="number" class="form-input" value="5.00" step="0.01"></div>
+                <div class="form-group"><label class="form-label">Annual Price ($)</label><input type="number" class="form-input" value="50.00" step="0.01"></div>
+                <div class="form-group"><label class="form-label">Free Trial Days</label><input type="number" class="form-input" value="14"></div>
+                <div class="form-group"><label class="form-label">Currency</label><select class="form-select"><option>USD</option><option>EUR</option><option>GBP</option><option>ILS (₪)</option></select></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Features & Toggles</h3></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Enable Captions by Default</span><label class="toggle"><input type="checkbox" checked><span class="tog-slider"></span></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Autoplay Next Video</span><label class="toggle"><input type="checkbox" checked><span class="tog-slider"></span></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Picture-in-Picture</span><label class="toggle"><input type="checkbox" checked><span class="tog-slider"></span></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Offline Downloads</span><label class="toggle"><input type="checkbox"><span class="tog-slider"></span></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Comments / Discussions</span><label class="toggle"><input type="checkbox" checked><span class="tog-slider"></span></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><span class="form-label" style="margin-bottom:0;">Maintenance Mode</span><label class="toggle"><input type="checkbox"><span class="tog-slider"></span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Player Defaults</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Default Quality</label><select class="form-select"><option>Auto</option><option>1080p</option><option selected>720p</option><option>480p</option></select></div>
+                <div class="form-group"><label class="form-label">Default Speed</label><select class="form-select"><option>0.75×</option><option selected>1×</option><option>1.25×</option><option>1.5×</option></select></div>
+                <div class="form-group"><label class="form-label">Skip Interval (sec)</label><input type="number" class="form-input" value="10"></div>
+                <div class="form-group"><label class="form-label">Player Theme</label><select class="form-select"><option selected>Cosmos Gold</option><option>Minimal White</option><option>Pure Black</option></select></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Security</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Change Admin Password</label><input type="password" class="form-input" placeholder="New password"></div>
+                <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" class="form-input" placeholder="Confirm new password"></div>
+                <div class="form-group"><label class="form-label">Change Admin Username</label><input type="text" class="form-input" value="admin"></div>
+                <div class="form-group"><label class="form-label">Two-Factor Auth</label><select class="form-select"><option>Disabled</option><option>SMS</option><option>Authenticator App</option></select></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ===== -->
+      <div class="admin-panel" id="panel-users">
+        <div class="admin-topbar"><div class="page-title">Subscribers</div></div>
+        <div style="padding:2rem;">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Subscribers</div><div class="stat-value">1.04M</div><div class="stat-change up">↑ 4,821 today</div></div>
+            <div class="stat-card"><div class="stat-label">Monthly Plan</div><div class="stat-value">312K</div><div class="stat-change up">30% of total</div></div>
+            <div class="stat-card"><div class="stat-label">Annual Plan</div><div class="stat-value">728K</div><div class="stat-change up">70% of total</div></div>
+            <div class="stat-card"><div class="stat-label">Avg LTV</div><div class="stat-value">$62</div><div class="stat-change up">↑ $4 this year</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Recent Subscribers</h3></div>
+            <div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead><tr><th>Email</th><th>Plan</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr><td>alice@example.com</td><td>Annual</td><td>Feb 18, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+                  <tr><td>bob@example.com</td><td>Monthly</td><td>Feb 17, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+                  <tr><td>carol@example.com</td><td>Annual</td><td>Feb 15, 2026</td><td><span class="badge badge-yellow">Trial</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+                  <tr><td>dave@example.com</td><td>Monthly</td><td>Feb 12, 2026</td><td><span class="badge badge-red">Cancelled</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+                  <tr><td>eve@example.com</td><td>Annual</td><td>Feb 10, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin-main -->
+  </div><!-- /admin-layout -->
+</div><!-- /adminApp -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== AUTH =====
+const ADMIN_USER='admin', ADMIN_PASS='cosmos2026';
+function doLogin(){
+  const u=document.getElementById('loginUser').value;
+  const p=document.getElementById('loginPass').value;
+  if(u===ADMIN_USER&&p===ADMIN_PASS){
+    document.getElementById('loginScreen').style.opacity='0';
+    document.getElementById('loginScreen').style.pointerEvents='none';
+    setTimeout(()=>document.getElementById('loginScreen').style.display='none',400);
+    document.getElementById('adminApp').style.display='block';
+    initAdmin();
+  } else {
+    const err=document.getElementById('loginError');
+    err.textContent='Invalid username or password.';
+    document.getElementById('loginPass').value='';
+    setTimeout(()=>err.textContent='',3000);
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
+function logout(){document.getElementById('adminApp').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('loginScreen').style.opacity='1';document.getElementById('loginScreen').style.pointerEvents='';}
+
+// ===== PANEL NAV =====
+function showPanel(name, navEl){
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl)navEl.classList.add('active');
+  else{
+    const items=document.querySelectorAll('.nav-item');
+    items.forEach(item=>{if(item.getAttribute('onclick')&&item.getAttribute('onclick').includes("'"+name+"'"))item.classList.add('active');});
+  }
+}
+
+// ===== DATA =====
+const videos=[
+  {id:'cosmos-intro',title:'The Universe Is Larger Than You Think',channel:'Kurzgesagt',category:'Science',status:'published',views:'1.2M',duration:'42:17',emoji:'🌌',bg:'linear-gradient(135deg,#0f0c29,#302b63)'},
+  {id:'veritasium-1',title:'The Most Dangerous Equation',channel:'Veritasium',category:'Math',status:'published',views:'842K',duration:'28:44',emoji:'⚗️',bg:'linear-gradient(135deg,#1a1a2e,#243b55)'},
+  {id:'real-science-1',title:'What Consciousness Really Is',channel:'Real Science',category:'Science',status:'published',views:'512K',duration:'19:22',emoji:'🧠',bg:'linear-gradient(135deg,#2d1b69,#11998e)'},
+  {id:'wendover-1',title:'Why Every City Has the Same Layout',channel:'Wendover',category:'Culture',status:'draft',views:'—',duration:'22:11',emoji:'🏙️',bg:'linear-gradient(135deg,#ff6b6b,#feca57)'},
+  {id:'cgp-1',title:'You Are Two',channel:'CGP Grey',category:'Science',status:'published',views:'3.4M',duration:'41:03',emoji:'🧬',bg:'linear-gradient(135deg,#4a1942,#c0392b)'},
+  {id:'pbs-1',title:'Are Black Holes Dark Energy Stars?',channel:'PBS Space Time',category:'Science',status:'review',views:'—',duration:'34:18',emoji:'⚫',bg:'linear-gradient(135deg,#141e30,#243b55)'},
+];
+
+function initAdmin(){
+  renderVideoTable();
+  renderDashTable();
+  renderActivity();
+  renderChart();
+}
+
+function statusBadge(s){
+  const map={published:'badge-green',draft:'badge-gray',review:'badge-yellow'};
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+}
+
+function renderVideoTable(){
+  document.getElementById('videoTableBody').innerHTML=videos.map(v=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:${v.bg}">${v.emoji}</div><span style="font-weight:500;">${v.title}</span></div></td>
+      <td style="color:var(--text-muted);">${v.channel}</td>
+      <td style="color:var(--text-muted);">${v.category}</td>
+      <td>${statusBadge(v.status)}</td>
+      <td style="color:var(--text-muted);">${v.views}</td>
+      <td style="color:var(--text-muted);">${v.duration}</td>
+      <td><div style="display:flex;gap:.4rem;"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-red btn-sm" onclick="deleteVideo('${v.id}',this)">Del</button></div></td>
+    </tr>`).join('');
+}
+
+function renderDashTable(){
+  document.getElementById('dashVideoTable').innerHTML=videos.slice(0,5).map(v=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:.75rem;"><div class="thumb-sm" style="background:${v.bg}">${v.emoji}</div><span style="font-weight:500;font-size:.83rem;">${v.title.substring(0,35)}…</span></div></td>
+      <td>${statusBadge(v.status)}</td>
+      <td style="color:var(--text-muted);">${v.views}</td>
+      <td style="color:var(--text-muted);">${v.duration}</td>
+      <td><button class="btn btn-ghost btn-sm">Edit</button></td>
+    </tr>`).join('');
+}
+
+function renderActivity(){
+  const acts=[
+    {color:'#4ecb71',text:'New subscriber <strong>alice@ex.com</strong> joined Annual plan',time:'2 min ago'},
+    {color:'#c8a96e',text:'Video <strong>"The Universe Is Larger"</strong> reached 1M views',time:'14 min ago'},
+    {color:'#6ea8c8',text:'<strong>Veritasium</strong> uploaded a new video (pending review)',time:'1 hr ago'},
+    {color:'#e05252',text:'Subscriber <strong>dave@ex.com</strong> cancelled their plan',time:'3 hr ago'},
+    {color:'#4ecb71',text:'Site settings updated by <strong>admin</strong>',time:'5 hr ago'},
+    {color:'#c8a96e',text:'New channel <strong>Real Engineering</strong> onboarded',time:'Yesterday'},
+  ];
+  document.getElementById('activityList').innerHTML=acts.map(a=>`
+    <div class="activity-item"><div class="activity-dot" style="background:${a.color}"></div>
+    <div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div></div>`).join('');
+}
+
+function renderChart(){
+  const data=[42,58,71,49,88,95,72,110,128,142,98,115,132,158,142];
+  const max=Math.max(...data);
+  const bars=document.getElementById('chartBars');
+  if(!bars)return;
+  bars.innerHTML=data.map((v,i)=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.4rem;">
+      <div style="font-size:.6rem;color:var(--text-muted);">${v}K</div>
+      <div style="width:100%;height:${(v/max)*180}px;background:${i===data.length-1?'var(--accent)':'rgba(200,169,110,0.3)'};border-radius:4px 4px 0 0;transition:height .3s;cursor:pointer;" title="${v}K views" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='${i===data.length-1?'var(--accent)':'rgba(200,169,110,0.3)'}'"></div>
+    </div>`).join('');
+}
+
+function deleteVideo(id,btn){
+  const row=btn.closest('tr');
+  row.style.opacity='0';row.style.transform='translateX(20px)';row.style.transition='all .3s';
+  setTimeout(()=>row.remove(),300);
+  showToast('Video deleted','success');
+}
+
+function filterTable(q){
+  document.querySelectorAll('#videoTableBody tr').forEach(row=>{
+    row.style.display=row.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';
+  });
+}
+
+// ===== UPLOAD =====
+const uploadZone=document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag-over');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('video/'))showFilePreview(f);});
+
+function handleFileSelect(input){if(input.files[0])showFilePreview(input.files[0]);}
+function showFilePreview(file){
+  document.getElementById('fileName').textContent=file.name;
+  document.getElementById('fileSize').textContent=(file.size/1024/1024).toFixed(1)+' MB';
+  document.getElementById('filePreview').classList.add('show');
+}
+function clearFile(){
+  document.getElementById('filePreview').classList.remove('show');
+  document.getElementById('videoFileInput').value='';
+  document.getElementById('uploadProgress').style.display='none';
+  document.getElementById('uploadProgressFill').style.width='0%';
+}
+function simulateUpload(){
+  document.getElementById('uploadProgress').style.display='block';
+  let pct=0;
+  const iv=setInterval(()=>{
+    pct=Math.min(100,pct+Math.random()*8+2);
+    document.getElementById('uploadProgressFill').style.width=pct+'%';
+    document.getElementById('uploadPct').textContent=Math.round(pct)+'%';
+    if(pct>=100){clearInterval(iv);showToast('🎉 Video published successfully!','success');setTimeout(clearFile,1500);}
+  },200);
+}
+
+// ===== SITE SETTINGS =====
+function selectColor(el,color){
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  showToast('Accent color updated','success');
+}
+function saveSettings(){showToast('✅ Settings saved!','success');}
+
+// ===== PAGE EDITOR =====
+let canvasBlocks=[];
+let selectedBlock=null;
+let dragType=null;
+let zoomLevel=1.0;
+let history=[];
+
+function zoom(delta){
+  zoomLevel=Math.max(0.4,Math.min(1.5,zoomLevel+delta));
+  document.getElementById('canvasScaleWrap').style.transform=`scale(${zoomLevel})`;
+  document.getElementById('zoomDisplay').textContent=Math.round(zoomLevel*100)+'%';
+}
+function zoomFit(){zoomLevel=0.75;document.getElementById('canvasScaleWrap').style.transform=`scale(${zoomLevel})`;document.getElementById('zoomDisplay').textContent='75%';}
+function setTool(name,btn){document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+function dragBlock(type,e){dragType=type;e.dataTransfer.effectAllowed='copy';}
+function canvasDragOver(e){e.preventDefault();}
+function canvasDrop(e){e.preventDefault();if(dragType)addBlock(dragType);}
+function zoneDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function zoneDrop(e,idx){
+  e.preventDefault();e.stopPropagation();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragType)addBlock(dragType,idx);
+}
+
+const blockTemplates={
+  hero:{label:'Hero Banner',render:()=>`<div class="cb-hero"><h1>✨ Welcome to Cosmos</h1><p>Premium ad-free streaming from the world's most thoughtful creators.</p><span class="cb-hero-btn">Start Watching →</span></div>`},
+  text:{label:'Text Section',render:()=>`<div class="cb-text"><h2>About Cosmos</h2><p>We believe great ideas deserve your full attention. That's why we built an ad-free platform where creators and viewers come first. No algorithms. No interruptions. Just pure, thoughtful content.</p></div>`},
+  videogrid:{label:'Video Grid',render:()=>`<div class="cb-video-grid"><h2>Trending Now</h2><div class="cb-vg-inner"><div class="cb-vg-card"><div class="cb-vg-card-thumb" style="background:linear-gradient(135deg,#0f0c29,#302b63)">🌌</div><div class="cb-vg-card-info"><div class="cb-vg-card-title">The Universe Is Larger Than You Think</div></div></div><div class="cb-vg-card"><div class="cb-vg-card-thumb" style="background:linear-gradient(135deg,#2d1b69,#11998e)">🧠</div><div class="cb-vg-card-info"><div class="cb-vg-card-title">What Consciousness Really Is</div></div></div><div class="cb-vg-card"><div class="cb-vg-card-thumb" style="background:linear-gradient(135deg,#4a1942,#c0392b)">🧬</div><div class="cb-vg-card-info"><div class="cb-vg-card-title">You Are Two</div></div></div></div></div>`},
+  cta:{label:'Call to Action',render:()=>`<div class="cb-cta"><h2>Join Cosmos Today</h2><p>Ad-free streaming from the creators you love.</p><span class="cb-cta-btn">Get Started — $5/mo</span></div>`},
+  image:{label:'Image Banner',render:()=>`<div class="cb-image">🖼️ Image Block</div>`},
+  channels:{label:'Channels Row',render:()=>`<div class="cb-channels"><h2>Featured Channels</h2><div class="cb-ch-grid"><div class="cb-ch-card"><div class="cb-ch-av" style="background:linear-gradient(135deg,#0f0c29,#302b63)">🌌</div><div class="cb-ch-name">Kurzgesagt</div></div><div class="cb-ch-card"><div class="cb-ch-av" style="background:linear-gradient(135deg,#141e30,#243b55)">⚗️</div><div class="cb-ch-name">Veritasium</div></div><div class="cb-ch-card"><div class="cb-ch-av" style="background:linear-gradient(135deg,#093028,#237a57)">📐</div><div class="cb-ch-name">3Blue1Brown</div></div><div class="cb-ch-card"><div class="cb-ch-av" style="background:linear-gradient(135deg,#1d2671,#c33764)">🧬</div><div class="cb-ch-name">CGP Grey</div></div><div class="cb-ch-card"><div class="cb-ch-av" style="background:linear-gradient(135deg,#373b44,#4286f4)">✈️</div><div class="cb-ch-name">Wendover</div></div></div></div>`},
+  testimonial:{label:'Quote',render:()=>`<div class="cb-testimonial"><blockquote>"Cosmos has completely changed how I learn. It's the Netflix of ideas."</blockquote><cite>— Alex M., Annual Subscriber</cite></div>`},
+  footer:{label:'Footer',render:()=>`<div class="cb-footer"><div class="fl">Cos<span>mos</span></div><div>© 2026 Cosmos Streaming, Inc.</div></div>`},
+};
+
+function addBlock(type, insertAfter=-1){
+  saveHistory();
+  const id='block_'+(Date.now());
+  const block={id,type,label:blockTemplates[type].label};
+  if(insertAfter===-1||insertAfter>=canvasBlocks.length){canvasBlocks.push(block);}
+  else{canvasBlocks.splice(insertAfter,0,block);}
+  renderCanvas();
+  selectBlockEl(id);
+  dragType=null;
+}
+
+function renderCanvas(){
+  const canvas=document.getElementById('editorCanvas');
+  const hint=document.getElementById('canvasHint');
+  if(canvasBlocks.length===0){
+    canvas.innerHTML='<div class="drop-zone" id="rootDropZone" ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,0)"><div class="drop-zone-hint" id="canvasHint">Drag blocks here to build your page</div></div>';
+    return;
+  }
+  canvas.innerHTML=canvasBlocks.map((b,i)=>`
+    <div class="canvas-block${selectedBlock===b.id?' selected':''}" id="${b.id}" onclick="selectBlockEl('${b.id}')">
+      <div class="block-actions">
+        <button class="block-action-btn" onclick="event.stopPropagation();moveSelected(-1)">↑</button>
+        <button class="block-action-btn" onclick="event.stopPropagation();moveSelected(1)">↓</button>
+        <button class="block-action-btn" onclick="event.stopPropagation();duplicateSelected()">⧉</button>
+        <button class="block-action-btn del" onclick="event.stopPropagation();deleteSelected()">✕</button>
+      </div>
+      ${blockTemplates[b.type].render()}
+    </div>
+    <div class="drop-zone" style="min-height:30px;" ondragover="zoneDragOver(event)" ondrop="zoneDrop(event,${i+1})"></div>
+  `).join('');
+  renderLayers();
+}
+
+function selectBlockEl(id){
+  selectedBlock=id;
+  renderCanvas();
+  renderProps();
+}
+
+function renderLayers(){
+  document.getElementById('layersList').innerHTML=canvasBlocks.map((b,i)=>`
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border-radius:5px;cursor:pointer;background:${selectedBlock===b.id?'rgba(200,169,110,.1)':'transparent'};border:1px solid ${selectedBlock===b.id?'rgba(200,169,110,.3)':'transparent'};" onclick="selectBlockEl('${b.id}')">
+      <span style="font-size:.75rem;color:var(--text-muted);min-width:16px;">${i+1}</span>
+      <span style="font-size:.78rem;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.label}</span>
+    </div>`).join('');
+}
+
+function renderProps(){
+  const panel=document.getElementById('propsPanel');
+  const block=canvasBlocks.find(b=>b.id===selectedBlock);
+  if(!block){panel.innerHTML='<div class="no-selection"><span>👆</span><p>Select a block to edit</p></div>';return;}
+  panel.innerHTML=`
+    <div class="prop-group">
+      <div class="prop-label">Block Type</div>
+      <div style="font-size:.82rem;font-weight:600;color:var(--accent);">${block.label}</div>
+    </div>
+    ${block.type==='hero'?`
+    <div class="prop-group">
+      <div class="prop-label">Headline</div>
+      <input class="prop-input" value="✨ Welcome to Cosmos" oninput="updateBlockProp('headline',this.value)">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Subtext</div>
+      <input class="prop-input" value="Premium ad-free streaming.">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Button Text</div>
+      <input class="prop-input" value="Start Watching →">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Background</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:linear-gradient(135deg,#0f0c29,#302b63);width:24px;height:24px;" onclick="showToast('Gradient applied')"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#141e30,#243b55);width:24px;height:24px;" onclick="showToast('Gradient applied')"></div>
+        <div class="color-swatch" style="background:linear-gradient(135deg,#1d2671,#c33764);width:24px;height:24px;" onclick="showToast('Gradient applied')"></div>
+      </div>
+    </div>`:block.type==='text'?`
+    <div class="prop-group">
+      <div class="prop-label">Heading</div>
+      <input class="prop-input" value="About Cosmos">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Body Text</div>
+      <textarea class="prop-input" style="min-height:80px;resize:vertical;">We believe great ideas deserve your full attention.</textarea>
+    </div>`:block.type==='cta'?`
+    <div class="prop-group">
+      <div class="prop-label">CTA Heading</div>
+      <input class="prop-input" value="Join Cosmos Today">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Button Text</div>
+      <input class="prop-input" value="Get Started — $5/mo">
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Background Color</div>
+      <input type="color" class="prop-input" value="#c8a96e" style="height:36px;padding:.2rem;">
+    </div>`:block.type==='testimonial'?`
+    <div class="prop-group">
+      <div class="prop-label">Quote</div>
+      <textarea class="prop-input" style="min-height:80px;resize:vertical;">"Cosmos has completely changed how I learn."</textarea>
+    </div>
+    <div class="prop-group">
+      <div class="prop-label">Attribution</div>
+      <input class="prop-input" value="Alex M., Annual Subscriber">
+    </div>`:`<div style="font-size:.8rem;color:var(--text-muted);padding:.5rem 0;">No editable properties for this block type.</div>`}
+    <div style="margin-top:1rem;display:flex;gap:.4rem;flex-wrap:wrap;">
+      <button class="btn btn-red btn-sm" onclick="deleteSelected()" style="width:100%;justify-content:center;">🗑 Remove Block</button>
+    </div>`;
+}
+
+function saveHistory(){history.push(JSON.parse(JSON.stringify(canvasBlocks)));}
+function undoAction(){if(history.length){canvasBlocks=history.pop();selectedBlock=null;renderCanvas();showToast('↩ Undone');}}
+function moveSelected(dir){
+  const idx=canvasBlocks.findIndex(b=>b.id===selectedBlock);
+  if(idx===-1)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=canvasBlocks.length)return;
+  saveHistory();
+  const tmp=canvasBlocks[idx];canvasBlocks[idx]=canvasBlocks[newIdx];canvasBlocks[newIdx]=tmp;
+  renderCanvas();
+}
+function duplicateSelected(){
+  const block=canvasBlocks.find(b=>b.id===selectedBlock);
+  if(!block)return;
+  saveHistory();
+  const copy={...block,id:'block_'+(Date.now())};
+  const idx=canvasBlocks.findIndex(b=>b.id===selectedBlock);
+  canvasBlocks.splice(idx+1,0,copy);
+  renderCanvas();
+  selectBlockEl(copy.id);
+  showToast('Block duplicated');
+}
+function deleteSelected(){
+  if(!selectedBlock)return;
+  saveHistory();
+  canvasBlocks=canvasBlocks.filter(b=>b.id!==selectedBlock);
+  selectedBlock=null;
+  renderCanvas();
+  document.getElementById('propsPanel').innerHTML='<div class="no-selection"><span>👆</span><p>Select a block to edit</p></div>';
+}
+function clearCanvas(){
+  if(!confirm('Clear the entire canvas?'))return;
+  saveHistory();canvasBlocks=[];selectedBlock=null;renderCanvas();
+  document.getElementById('propsPanel').innerHTML='<div class="no-selection"><span>👆</span><p>Select a block to edit</p></div>';
+}
+function saveCanvas(){showToast('💾 Page saved!','success');}
+function previewCanvas(){
+  const html=document.getElementById('editorCanvas').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;}.cb-hero{background:linear-gradient(135deg,#0f0c29,#302b63);padding:4rem 3rem;text-align:center;color:#fff;}.cb-hero h1{font-family:'DM Serif Display',serif;font-size:2.5rem;margin-bottom:1rem;}.cb-hero p{opacity:.7;margin-bottom:1.5rem;max-width:500px;margin-left:auto;margin-right:auto;}.cb-hero-btn{display:inline-block;padding:.7rem 1.8rem;background:#c8a96e;color:#0a0a0f;border-radius:5px;font-weight:700;font-size:.9rem;}.cb-text{padding:2rem 3rem;background:#fff;}.cb-text h2{font-family:'DM Serif Display',serif;font-size:1.8rem;color:#0a0a0f;margin-bottom:.75rem;}.cb-text p{color:#555;line-height:1.7;}.cb-video-grid{padding:2rem 3rem;background:#0a0a0f;}.cb-video-grid h2{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#fff;margin-bottom:1.25rem;}.cb-vg-inner{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;}.cb-vg-card{background:#13131c;border-radius:6px;overflow:hidden;}.cb-vg-card-thumb{aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:2rem;}.cb-vg-card-info{padding:.6rem;}.cb-vg-card-title{font-size:.75rem;color:#f0ede8;font-weight:500;}.cb-cta{background:#c8a96e;padding:3rem;text-align:center;}.cb-cta h2{font-family:'DM Serif Display',serif;font-size:2rem;color:#0a0a0f;margin-bottom:.75rem;}.cb-cta p{color:rgba(10,10,15,.7);margin-bottom:1.5rem;}.cb-cta-btn{display:inline-block;padding:.7rem 2rem;background:#0a0a0f;color:#fff;border-radius:5px;font-weight:700;}.cb-image{width:100%;aspect-ratio:21/7;background:linear-gradient(135deg,#1a1a2e,#2d2d5a);display:flex;align-items:center;justify-content:center;font-size:3rem;color:rgba(255,255,255,.3);}.cb-footer{background:#07070e;padding:2rem 3rem;display:flex;justify-content:space-between;align-items:center;color:#888;}.cb-footer .fl{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#c8a96e;}.cb-footer .fl span{color:#fff;}.cb-testimonial{background:#f8f6f2;padding:2.5rem 3rem;text-align:center;}.cb-testimonial blockquote{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#0a0a0f;margin-bottom:1rem;font-style:italic;}.cb-testimonial cite{font-size:.82rem;color:#888;}.cb-channels{background:#0a0a0f;padding:2rem 3rem;}.cb-channels h2{font-family:'DM Serif Display',serif;font-size:1.4rem;color:#f0ede8;margin-bottom:1.25rem;}.cb-ch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;}.cb-ch-card{background:#13131c;border-radius:8px;padding:.9rem;text-align:center;}.cb-ch-av{width:40px;height:40px;border-radius:50%;margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}.cb-ch-name{font-size:.68rem;font-weight:600;color:#f0ede8;}.canvas-block{position:relative;}.block-actions{display:none;}</style></head><body>${html}</body></html>`);
+  w.document.close();
+}
+
+// ===== TOAST =====
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2500);
+}
+</script>
+</body>
+</html>
